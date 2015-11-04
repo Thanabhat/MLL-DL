@@ -5,6 +5,9 @@ import theano
 import theano.tensor as T
 from sklearn import preprocessing
 from sklearn.cross_validation import train_test_split
+from mlp import test_mlp
+from DBN import test_DBN
+
 
 def shared_dataset(data_xy, borrow=True):
     """ Function that loads the dataset into shared variables
@@ -17,10 +20,10 @@ def shared_dataset(data_xy, borrow=True):
     """
     data_x, data_y = data_xy
     shared_x = theano.shared(np.asarray(data_x,
-                                           dtype=theano.config.floatX),
+                                        dtype=theano.config.floatX),
                              borrow=borrow)
     shared_y = theano.shared(np.asarray(data_y,
-                                           dtype=theano.config.floatX),
+                                        dtype=theano.config.floatX),
                              borrow=borrow)
     # When storing data on the GPU it has to be stored as floats
     # therefore we will store the labels as ``floatX`` as well
@@ -30,6 +33,7 @@ def shared_dataset(data_xy, borrow=True):
     # ``shared_y`` we will have to cast it to int. This little hack
     # lets ous get around this issue
     return shared_x, T.cast(shared_y, 'int32')
+
 
 def load_data(arffPath, xmlPath):
     # load data from file
@@ -45,11 +49,12 @@ def load_data(arffPath, xmlPath):
     # create data map for using in create data
     dataToAttrMap = []
     for i in range(len(attributes)):
-        attributesName = attributes[i][0].decode( 'string_escape' )
+        attributesName = attributes[i][0].decode('string_escape')
         if type(attributes[i][1]) is list:
             if not attributesName in isLabels:
                 for j in range(len(attributes[i][1])):
-                    dataToAttrMap.append({'type': 'NOMINAL', 'name': attributesName, 'index': i, 'value': attributes[i][1][j]})
+                    dataToAttrMap.append(
+                        {'type': 'NOMINAL', 'name': attributesName, 'index': i, 'value': attributes[i][1][j]})
             else:
                 dataToAttrMap.append({'type': 'LABEL', 'name': attributesName, 'index': i})
             pass
@@ -97,9 +102,16 @@ def load_data(arffPath, xmlPath):
     rval = [(train_set_x, train_set_y), (valid_set_x, valid_set_y),
             (test_set_x, test_set_y)]
 
-    return rval
+    return rval, len(data_x[0]), len(data_y[0])
 
-datasets = load_data('datasets/flags/flags.arff','datasets/flags/flags.xml')
+
+datasets, attrSize, classSize = load_data('datasets/flags/flags.arff', 'datasets/flags/flags.xml')
 # datasets = load_data('datasets/birds/birds-train.arff','datasets/birds/birds.xml')
+
+# error, predict = test_mlp(datasets = datasets, n_in=attrSize, n_out=classSize, n_hidden=500, batch_size=20, n_epochs=1000, learning_rate=0.005, L1_reg=0.000, L2_reg=0.000)
+error, predict = test_DBN(datasets=datasets, n_ins=attrSize, n_outs=classSize, hidden_layers_sizes=[40, 40], pretraining_epochs=2000, pretrain_lr=0.2, training_epochs=10000, finetune_lr=0.007, batch_size=3)
+
+# print(error)
+print(predict)
 
 pass
