@@ -341,6 +341,16 @@ def test_mlp(datasets, n_in, n_out, learning_rate=0.01, L1_reg=0.00, L2_reg=0.00
     epoch = 0
     done_looping = False
 
+    predicted_result = []
+    predict_model = theano.function(
+        inputs=[],
+        outputs=[classifier.errors(y),classifier.predict()],
+        givens={
+            x: test_set_x,
+            y: test_set_y
+        }
+    )
+
     while (epoch < n_epochs) and (not done_looping):
         epoch = epoch + 1
         for minibatch_index in xrange(n_train_batches):
@@ -388,6 +398,8 @@ def test_mlp(datasets, n_in, n_out, learning_rate=0.01, L1_reg=0.00, L2_reg=0.00
                           (epoch, minibatch_index + 1, n_train_batches,
                            test_score * 100.))
 
+                    predicted_result = predict_model()
+
             if patience <= iter:
                 done_looping = True
                 break
@@ -400,16 +412,7 @@ def test_mlp(datasets, n_in, n_out, learning_rate=0.01, L1_reg=0.00, L2_reg=0.00
                           os.path.split(__file__)[1] +
                           ' ran for %.2fm' % ((end_time - start_time) / 60.))
 
-
-    predict_model = theano.function(
-        inputs=[],
-        outputs=[classifier.errors(y),classifier.predict()],
-        givens={
-            x: test_set_x,
-            y: test_set_y
-        }
-    )
-    return predict_model()
+    return predicted_result
 
 
 if __name__ == '__main__':

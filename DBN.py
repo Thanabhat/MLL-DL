@@ -386,6 +386,8 @@ def test_DBN(datasets, n_ins, n_outs, hidden_layers_sizes=[500, 500], finetune_l
     done_looping = False
     epoch = 0
 
+    predicted_result = []
+
     while (epoch < training_epochs) and (not done_looping):
         epoch = epoch + 1
         for minibatch_index in xrange(n_train_batches):
@@ -397,14 +399,19 @@ def test_DBN(datasets, n_ins, n_outs, hidden_layers_sizes=[500, 500], finetune_l
 
                 validation_losses = validate_model()
                 this_validation_loss = numpy.mean(validation_losses)
+
+                tmp_test_losses = test_model()
+                tmp_test_score = numpy.mean(tmp_test_losses)
+
                 print(
-                    'epoch %i, minibatch %i/%i, train error %f %%, validation error %f %%'
+                    'epoch %i, minibatch %i/%i, train error %f %%, validation error %f %%, test error %f %%'
                     % (
                         epoch,
                         minibatch_index + 1,
                         n_train_batches,
                         train_losses * 100,
-                        this_validation_loss * 100.
+                        this_validation_loss * 100.,
+                        tmp_test_score * 100.
                     )
                 )
 
@@ -430,6 +437,8 @@ def test_DBN(datasets, n_ins, n_outs, hidden_layers_sizes=[500, 500], finetune_l
                           (epoch, minibatch_index + 1, n_train_batches,
                            test_score * 100.))
 
+                    predicted_result = predict_model()
+
             if patience <= iter:
                 done_looping = True
                 break
@@ -447,7 +456,7 @@ def test_DBN(datasets, n_ins, n_outs, hidden_layers_sizes=[500, 500], finetune_l
                           ' ran for %.2fm' % ((end_time - start_time)
                                               / 60.))
 
-    return predict_model()
+    return predicted_result
 
 
 if __name__ == '__main__':

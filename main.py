@@ -7,6 +7,8 @@ from sklearn import preprocessing
 from sklearn.cross_validation import train_test_split
 from mlp import test_mlp
 from DBN import test_DBN
+from sklearn.metrics import jaccard_similarity_score
+from sklearn.metrics import hamming_loss
 
 
 def shared_dataset(data_xy, borrow=True):
@@ -102,16 +104,22 @@ def load_data(arffPath, xmlPath):
     rval = [(train_set_x, train_set_y), (valid_set_x, valid_set_y),
             (test_set_x, test_set_y)]
 
-    return rval, len(data_x[0]), len(data_y[0])
+    return rval, len(data_x[0]), len(data_y[0]), data_y_test
 
 
-datasets, attrSize, classSize = load_data('datasets/flags/flags.arff', 'datasets/flags/flags.xml')
+# datasets, attrSize, classSize, actualLabels = load_data('datasets/flags/flags.arff', 'datasets/flags/flags.xml')
 # datasets = load_data('datasets/birds/birds-train.arff','datasets/birds/birds.xml')
+datasets, attrSize, classSize, actualLabels = load_data('datasets/yeast/yeast.arff', 'datasets/yeast/yeast.xml')
 
-# error, predict = test_mlp(datasets = datasets, n_in=attrSize, n_out=classSize, n_hidden=500, batch_size=20, n_epochs=1000, learning_rate=0.005, L1_reg=0.000, L2_reg=0.000)
-error, predict = test_DBN(datasets=datasets, n_ins=attrSize, n_outs=classSize, hidden_layers_sizes=[40, 40], pretraining_epochs=2000, pretrain_lr=0.2, training_epochs=10000, finetune_lr=0.007, batch_size=3)
+# error, predictedLabels = test_mlp(datasets = datasets, n_in=attrSize, n_out=classSize, n_hidden=60, batch_size=5, n_epochs=1000, learning_rate=0.03, L1_reg=0.001, L2_reg=0.001)
+error, predictedLabels = test_DBN(datasets=datasets, n_ins=attrSize, n_outs=classSize, hidden_layers_sizes=[100, 100], pretraining_epochs=1000, pretrain_lr=1.0, training_epochs=2000, finetune_lr=0.1, batch_size=20)
 
 # print(error)
-print(predict)
+# print(predictedLabels)
 
+actualLabels = np.array(actualLabels)
+predictedLabels = np.rint(predictedLabels).astype(int)
+
+print('Accuracy: ',jaccard_similarity_score(actualLabels,predictedLabels))
+print('Hamming Loss: ',hamming_loss(actualLabels,predictedLabels))
 pass
